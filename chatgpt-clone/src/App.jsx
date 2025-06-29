@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
+import ChatGPTClone from './ChatGPTClone';
 
-const LANGFLOW_API_URL = "https://langflowbubblemvp-production.up.railway.app/api/v1/run/c0504846-5aeb-4bde-b8a9-19185e33f7a3";
+const API_BASE = "http://localhost:4000/api";
 
 // Mock user for login
 const MOCK_USER = { email: 'latifmuda12@gmail.com', password: 'password' };
@@ -10,12 +11,20 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email === MOCK_USER.email && password === MOCK_USER.password) {
-      onLogin();
-    } else {
-      setError('Invalid credentials');
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+      onLogin(data.token, data.user);
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -249,120 +258,216 @@ function ChatArea({ messages, onSend, isTyping = false }) {
   );
 }
 
-function ChatGPTClone() {
-  const [sessions, setSessions] = useState([
-    { id: 1, name: 'New Chat', messages: [] },
-  ]);
-  const [activeSessionId, setActiveSessionId] = useState(1);
-  const [isTyping, setIsTyping] = useState(false);
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+function AdminDashboard({ token, setPage, onLogout }) {
+  const [users, setUsers] = useState([]);
+  const [form, setForm] = useState({ email: '', password: '', name: '', role: 'user' });
+  const [groupForm, setGroupForm] = useState({ name: '', description: '', selectedUsers: [] });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const activeSession = sessions.find(s => s.id === activeSessionId);
+  const fetchUsers = async () => {
+    const res = await fetch(`${API_BASE}/admin/users`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    setUsers(data);
+  };
 
-  const handleSend = async (input) => {
-    const userMsg = { role: 'user', content: input };
-    setSessions(sessions => sessions.map(s =>
-      s.id === activeSessionId
-        ? { ...s, messages: [...s.messages, userMsg] }
-        : s
-    ));
-    setIsTyping(true);
+  useEffect(() => { fetchUsers(); }, []);
 
-    // Prepare payload for Langflow API
-    const payload = {
-      input_value: input,
-      output_type: "chat",
-      input_type: "chat",
-      session_id: `session_${activeSessionId}`
-    };
+  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  const handleGroupChange = e => setGroupForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
+  const handleCreate = async e => {
+    e.preventDefault();
+    setError(''); setSuccess('');
     try {
-      const response = await fetch(LANGFLOW_API_URL, {
+      const res = await fetch(`${API_BASE}/admin/users`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(form)
       });
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
-      const data = await response.json();
-      console.log("Langflow API response:", data);
-      let aiContent = "";
-      try {
-        const o = data.outputs?.[0]?.outputs?.[0];
-        if (o?.results?.message?.data?.text) {
-          aiContent = o.results.message.data.text;
-        } else if (o?.results?.message?.text) {
-          aiContent = o.results.message.text;
-        } else if (o?.outputs?.message?.message) {
-          aiContent = o.outputs.message.message;
-        } else if (o?.artifacts?.message) {
-          aiContent = o.artifacts.message;
-        } else if (o?.messages?.[0]?.message) {
-          aiContent = o.messages[0].message;
-        } else {
-          aiContent = data?.output || data?.message || JSON.stringify(data);
-        }
-      } catch (e) {
-        aiContent = JSON.stringify(data);
-      }
-      const botMsg = { role: 'assistant', content: aiContent };
-      setSessions(sessions => sessions.map(s =>
-        s.id === activeSessionId
-          ? { ...s, messages: [...s.messages, botMsg] }
-          : s
-      ));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create user');
+      setSuccess('User created!');
+      setForm({ email: '', password: '', name: '', role: 'user' });
+      fetchUsers();
     } catch (err) {
-      const botMsg = { role: 'assistant', content: `Error: ${err.message}` };
-      setSessions(sessions => sessions.map(s =>
-        s.id === activeSessionId
-          ? { ...s, messages: [...s.messages, botMsg] }
-          : s
-      ));
-    } finally {
-      setIsTyping(false);
+      setError(err.message);
     }
   };
 
-  const handleNewChat = () => {
-    const newId = sessions.length ? Math.max(...sessions.map(s => s.id)) + 1 : 1;
-    setSessions([...sessions, { id: newId, name: `Chat ${newId}`, messages: [] }]);
-    setActiveSessionId(newId);
+  const handleCreateGroup = async e => {
+    e.preventDefault();
+    setError(''); setSuccess('');
+    try {
+      const res = await fetch(`${API_BASE}/admin/groups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(groupForm)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create group');
+      setSuccess('Group chat created!');
+      setGroupForm({ name: '', description: '', selectedUsers: [] });
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#343541]">
-      <Sidebar
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        setActiveSessionId={setActiveSessionId}
-        onNewChat={handleNewChat}
-        isVisible={sidebarVisible}
-      />
-      
-      <main className="flex-1 flex flex-col h-full">
-        {/* Header with toggle button */}
-        <div className="bg-[#343541] border-b border-[#565869] px-4 py-3 flex items-center">
-          <button
-            onClick={() => setSidebarVisible(!sidebarVisible)}
-            className="p-2 rounded-lg hover:bg-[#40414f] transition"
+    <div className="min-h-screen bg-[#343541] text-white p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Admin Dashboard</h2>
+          <button 
+            onClick={() => setPage('chat')} 
+            className="bg-[#19c37d] text-white px-4 py-2 rounded hover:bg-[#15a367] transition font-inter"
           >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            Back to Chat
           </button>
-          <h1 className="ml-3 text-white font-inter font-medium">ChatGPT</h1>
         </div>
         
-        <ChatArea
-          messages={activeSession.messages}
-          onSend={handleSend}
-          isTyping={isTyping}
-        />
-      </main>
+        <form onSubmit={handleCreate} className="mb-8 bg-[#444654] p-6 rounded-lg border border-[#565869]">
+          <h3 className="font-semibold mb-4 text-lg">Create New User</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <input 
+              name="email" 
+              value={form.email} 
+              onChange={handleChange} 
+              placeholder="Email" 
+              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
+              required 
+            />
+            <input 
+              name="password" 
+              value={form.password} 
+              onChange={handleChange} 
+              placeholder="Password" 
+              type="password" 
+              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
+              required 
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <input 
+              name="name" 
+              value={form.name} 
+              onChange={handleChange} 
+              placeholder="Name" 
+              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
+            />
+            <select 
+              name="role" 
+              value={form.role} 
+              onChange={handleChange} 
+              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter"
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          {error && <div className="text-red-400 text-sm mb-4 font-inter">{error}</div>}
+          {success && <div className="text-green-400 text-sm mb-4 font-inter">{success}</div>}
+          <button type="submit" className="bg-[#19c37d] text-white px-6 py-2 rounded hover:bg-[#15a367] transition font-inter font-medium">
+            Create User
+          </button>
+        </form>
+
+        <form onSubmit={handleCreateGroup} className="mb-8 bg-[#444654] p-6 rounded-lg border border-[#565869]">
+          <h3 className="font-semibold mb-4 text-lg">Create Group Chat</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <input 
+              name="name" 
+              value={groupForm.name} 
+              onChange={handleGroupChange} 
+              placeholder="Group Name" 
+              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
+              required 
+            />
+            <input 
+              name="description" 
+              value={groupForm.description} 
+              onChange={handleGroupChange} 
+              placeholder="Description" 
+              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
+            />
+          </div>
+          <button type="submit" className="bg-[#19c37d] text-white px-6 py-2 rounded hover:bg-[#15a367] transition font-inter font-medium">
+            Create Group Chat
+          </button>
+        </form>
+        
+        <div className="bg-[#444654] p-6 rounded-lg border border-[#565869]">
+          <h3 className="font-semibold mb-4 text-lg">All Users</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-gray-300 border-b border-[#565869]">
+                  <th className="p-3 font-medium">Email</th>
+                  <th className="p-3 font-medium">Name</th>
+                  <th className="p-3 font-medium">Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={u.id} className="border-b border-[#565869] hover:bg-[#40414f] transition">
+                    <td className="p-3">{u.email}</td>
+                    <td className="p-3">{u.name || '-'}</td>
+                    <td className="p-3">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        u.role === 'admin' ? 'bg-red-600 text-white' : 'bg-[#19c37d] text-white'
+                      }`}>
+                        {u.role}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="mt-4">
+          <button 
+            onClick={onLogout} 
+            className="bg-[#19c37d] text-white px-4 py-2 rounded hover:bg-[#15a367] transition font-inter"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  return loggedIn ? <ChatGPTClone /> : <Login onLogin={() => setLoggedIn(true)} />;
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [page, setPage] = useState('chat');
+
+  const handleLogin = (jwt, userInfo) => {
+    setToken(jwt);
+    setUser(userInfo);
+    // Redirect admins to admin dashboard, regular users to chat
+    setPage(userInfo.role === 'admin' ? 'admin' : 'chat');
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setUser(null);
+    setPage('chat');
+  };
+
+  if (!token) return <Login onLogin={handleLogin} />;
+
+  if (page === 'admin') return <AdminDashboard token={token} setPage={setPage} onLogout={handleLogout} />;
+
+  return (
+    <div>
+      {user?.role === 'admin' && (
+        <button onClick={() => setPage('admin')} className="fixed top-4 left-4 bg-[#19c37d] text-white px-4 py-2 rounded shadow-lg z-50 hover:bg-[#15a367] transition font-inter">Admin Dashboard</button>
+      )}
+      <ChatGPTClone user={user} token={token} onLogout={handleLogout} />
+    </div>
+  );
 }
