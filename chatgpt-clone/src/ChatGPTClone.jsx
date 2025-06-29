@@ -193,6 +193,21 @@ function ChatGPTClone({ user, token, onLogout }) {
     setActiveSessionId(sessionId);
   };
 
+  // Handler to update a session in state after rename
+  const handleSessionUpdate = (updatedSession) => {
+    setSessions(prev => prev.map(s => s.id === updatedSession.id ? updatedSession : s));
+  };
+
+  // Handler to remove a session from state after delete
+  const handleSessionDelete = (deletedSessionId) => {
+    setSessions(prev => prev.filter(s => s.id !== deletedSessionId));
+    // If the deleted session was active, select another session
+    if (activeSessionId === deletedSessionId) {
+      const remaining = sessions.filter(s => s.id !== deletedSessionId);
+      setActiveSessionId(remaining.length > 0 ? remaining[0].id : null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen w-screen overflow-hidden bg-[#343541] items-center justify-center">
@@ -221,6 +236,8 @@ function ChatGPTClone({ user, token, onLogout }) {
         isVisible={sidebarVisible}
         user={user}
         token={token}
+        onSessionUpdate={handleSessionUpdate}
+        onSessionDelete={handleSessionDelete}
       />
       
       <div className="flex-1 flex flex-col relative">

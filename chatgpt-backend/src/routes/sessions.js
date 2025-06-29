@@ -162,9 +162,24 @@ router.put('/:sessionId', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Session not found' });
     }
 
-    const updatedSession = await prisma.session.update({
+    await prisma.session.update({
       where: { id: parseInt(sessionId) },
       data: { name }
+    });
+
+    // Fetch the updated session with messages
+    const updatedSession = await prisma.session.findFirst({
+      where: {
+        id: parseInt(sessionId),
+        userId: req.user.id
+      },
+      include: {
+        messages: {
+          orderBy: {
+            createdAt: 'asc'
+          }
+        }
+      }
     });
 
     res.json(updatedSession);
