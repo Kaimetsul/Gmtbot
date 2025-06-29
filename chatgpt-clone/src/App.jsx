@@ -445,10 +445,21 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState('chat');
 
+  // Restore token and user from localStorage on app load
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   const handleLogin = (jwt, userInfo) => {
     setToken(jwt);
     setUser(userInfo);
-    // Redirect admins to admin dashboard, regular users to chat
+    localStorage.setItem('token', jwt);
+    localStorage.setItem('user', JSON.stringify(userInfo));
     setPage(userInfo.role === 'admin' ? 'admin' : 'chat');
   };
 
@@ -456,6 +467,8 @@ export default function App() {
     setToken(null);
     setUser(null);
     setPage('chat');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   if (!token) return <Login onLogin={handleLogin} />;
