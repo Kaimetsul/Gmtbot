@@ -131,19 +131,8 @@ function ChatGPTClone({ user, token, onLogout }) {
 
     setIsTyping(true);
 
-    // Save user message to database and get the saved message (with updated session name if needed)
-    const savedUserMsg = await saveMessage(input, 'user');
-
-    // Fetch the updated session (to get the new name if it changed)
-    const response = await fetch(`${API_BASE}/sessions/${activeSessionId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (response.ok) {
-      const updatedSession = await response.json();
-      setSessions(prev => prev.map(s =>
-        s.id === activeSessionId ? updatedSession : s
-      ));
-    }
+    // Save user message to database
+    await saveMessage(input, 'user');
 
     // Prepare payload for Langflow API
     const payload = {
@@ -180,23 +169,22 @@ function ChatGPTClone({ user, token, onLogout }) {
       } catch (e) {
         aiContent = JSON.stringify(data);
       }
-      // Save assistant message to database and get the saved message
-      const savedBotMsg = await saveMessage(aiContent, 'assistant');
-      // Update UI with both messages
-      setSessions(prev => prev.map(s =>
-        s.id === activeSessionId
-          ? { ...s, messages: [...s.messages, savedUserMsg, savedBotMsg] }
-          : s
-      ));
+      // Save assistant message to database
+      await saveMessage(aiContent, 'assistant');
     } catch (err) {
       const errorMsg = `Error: ${err.message}`;
-      const savedBotMsg = await saveMessage(errorMsg, 'assistant');
-      setSessions(prev => prev.map(s =>
-        s.id === activeSessionId
-          ? { ...s, messages: [...s.messages, savedUserMsg, savedBotMsg] }
-          : s
-      ));
+      await saveMessage(errorMsg, 'assistant');
     } finally {
+      // Always fetch the latest session from the backend to update the UI
+      const response = await fetch(`${API_BASE}/sessions/${activeSessionId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const updatedSession = await response.json();
+        setSessions(prev => prev.map(s =>
+          s.id === activeSessionId ? updatedSession : s
+        ));
+      }
       setIsTyping(false);
     }
   };
