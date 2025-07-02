@@ -5,6 +5,8 @@ import { PrismaClient } from "@prisma/client";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
 import sessionRoutes from "./routes/sessions.js";
+import groupRoutes from "./routes/groups.js";
+import llmProxyRoutes from "./routes/llmProxy.js";
 
 dotenv.config();
 const prisma = new PrismaClient();
@@ -22,6 +24,8 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/sessions", sessionRoutes);
+app.use("/api/groups", groupRoutes);
+app.use("/api/llm", llmProxyRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

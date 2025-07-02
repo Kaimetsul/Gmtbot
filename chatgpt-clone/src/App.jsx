@@ -276,7 +276,22 @@ function AdminDashboard({ token, setPage, onLogout }) {
   useEffect(() => { fetchUsers(); }, []);
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
-  const handleGroupChange = e => setGroupForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  
+  const handleGroupChange = e => {
+    const { name, value } = e.target;
+    if (name === 'selectedUsers') {
+      // Handle checkbox selection
+      const userId = parseInt(value);
+      setGroupForm(f => ({
+        ...f,
+        selectedUsers: f.selectedUsers.includes(userId)
+          ? f.selectedUsers.filter(id => id !== userId)
+          : [...f.selectedUsers, userId]
+      }));
+    } else {
+      setGroupForm(f => ({ ...f, [name]: value }));
+    }
+  };
 
   const handleCreate = async e => {
     e.preventDefault();
@@ -328,97 +343,145 @@ function AdminDashboard({ token, setPage, onLogout }) {
           </button>
         </div>
         
-        <form onSubmit={handleCreate} className="mb-8 bg-[#444654] p-6 rounded-lg border border-[#565869]">
-          <h3 className="font-semibold mb-4 text-lg">Create New User</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <input 
-              name="email" 
-              value={form.email} 
-              onChange={handleChange} 
-              placeholder="Email" 
-              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
-              required 
-            />
-            <input 
-              name="password" 
-              value={form.password} 
-              onChange={handleChange} 
-              placeholder="Password" 
-              type="password" 
-              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
-              required 
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Create User Form */}
+          <div className="bg-[#444654] p-6 rounded-lg border border-[#565869]">
+            <h3 className="font-semibold mb-4 text-lg">Create User</h3>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input 
+                  name="email" 
+                  type="email" 
+                  value={form.email} 
+                  onChange={handleChange} 
+                  className="w-full px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Password</label>
+                <input 
+                  name="password" 
+                  type="password" 
+                  value={form.password} 
+                  onChange={handleChange} 
+                  className="w-full px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input 
+                  name="name" 
+                  value={form.name} 
+                  onChange={handleChange} 
+                  className="w-full px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Role</label>
+                <select 
+                  name="role" 
+                  value={form.role} 
+                  onChange={handleChange} 
+                  className="w-full px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              {error && <div className="text-red-400 text-sm font-inter">{error}</div>}
+              {success && <div className="text-green-400 text-sm font-inter">{success}</div>}
+              <button type="submit" className="bg-[#19c37d] text-white px-6 py-2 rounded hover:bg-[#15a367] transition font-inter font-medium">
+                Create User
+              </button>
+            </form>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <input 
-              name="name" 
-              value={form.name} 
-              onChange={handleChange} 
-              placeholder="Name" 
-              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
-            />
-            <select 
-              name="role" 
-              value={form.role} 
-              onChange={handleChange} 
-              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter"
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          {error && <div className="text-red-400 text-sm mb-4 font-inter">{error}</div>}
-          {success && <div className="text-green-400 text-sm mb-4 font-inter">{success}</div>}
-          <button type="submit" className="bg-[#19c37d] text-white px-6 py-2 rounded hover:bg-[#15a367] transition font-inter font-medium">
-            Create User
-          </button>
-        </form>
 
-        <form onSubmit={handleCreateGroup} className="mb-8 bg-[#444654] p-6 rounded-lg border border-[#565869]">
-          <h3 className="font-semibold mb-4 text-lg">Create Group Chat</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <input 
-              name="name" 
-              value={groupForm.name} 
-              onChange={handleGroupChange} 
-              placeholder="Group Name" 
-              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
-              required 
-            />
-            <input 
-              name="description" 
-              value={groupForm.description} 
-              onChange={handleGroupChange} 
-              placeholder="Description" 
-              className="px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
-            />
+          {/* Create Group Form */}
+          <div className="bg-[#444654] p-6 rounded-lg border border-[#565869]">
+            <h3 className="font-semibold mb-4 text-lg">Create Group Chat</h3>
+            <form onSubmit={handleCreateGroup} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Group Name</label>
+                <input 
+                  name="name" 
+                  value={groupForm.name} 
+                  onChange={handleGroupChange} 
+                  placeholder="Enter group name" 
+                  className="w-full px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter" 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Description (Optional)</label>
+                <textarea 
+                  name="description" 
+                  value={groupForm.description} 
+                  onChange={handleGroupChange} 
+                  placeholder="Enter group description" 
+                  className="w-full px-3 py-2 rounded bg-[#40414f] text-white border border-[#565869] focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter resize-none" 
+                  rows="3"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Select Members</label>
+                <div className="max-h-40 overflow-y-auto space-y-2 bg-[#40414f] p-3 rounded border border-[#565869]">
+                  {users.map(user => (
+                    <label key={user.id} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="selectedUsers"
+                        value={user.id}
+                        checked={groupForm.selectedUsers.includes(user.id)}
+                        onChange={handleGroupChange}
+                        className="rounded border-[#565869] bg-[#40414f] text-[#19c37d] focus:ring-[#19c37d]"
+                      />
+                      <span className="text-sm">
+                        {user.name || user.email} 
+                        {user.role === 'admin' && (
+                          <span className="text-[#19c37d] ml-1">(Admin)</span>
+                        )}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  Selected: {groupForm.selectedUsers.length} users
+                </p>
+              </div>
+              <button type="submit" className="bg-[#19c37d] text-white px-6 py-2 rounded hover:bg-[#15a367] transition font-inter font-medium">
+                Create Group Chat
+              </button>
+            </form>
           </div>
-          <button type="submit" className="bg-[#19c37d] text-white px-6 py-2 rounded hover:bg-[#15a367] transition font-inter font-medium">
-            Create Group Chat
-          </button>
-        </form>
-        
-        <div className="bg-[#444654] p-6 rounded-lg border border-[#565869]">
+        </div>
+
+        {/* Users List */}
+        <div className="mt-8 bg-[#444654] p-6 rounded-lg border border-[#565869]">
           <h3 className="font-semibold mb-4 text-lg">All Users</h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-300 border-b border-[#565869]">
-                  <th className="p-3 font-medium">Email</th>
-                  <th className="p-3 font-medium">Name</th>
-                  <th className="p-3 font-medium">Role</th>
+                <tr className="border-b border-[#565869]">
+                  <th className="text-left py-2">Name</th>
+                  <th className="text-left py-2">Email</th>
+                  <th className="text-left py-2">Role</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map(u => (
-                  <tr key={u.id} className="border-b border-[#565869] hover:bg-[#40414f] transition">
-                    <td className="p-3">{u.email}</td>
-                    <td className="p-3">{u.name || '-'}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        u.role === 'admin' ? 'bg-red-600 text-white' : 'bg-[#19c37d] text-white'
+                {users.map(user => (
+                  <tr key={user.id} className="border-b border-[#565869]">
+                    <td className="py-2">{user.name || 'N/A'}</td>
+                    <td className="py-2">{user.email}</td>
+                    <td className="py-2">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        user.role === 'admin' 
+                          ? 'bg-[#19c37d] text-white' 
+                          : 'bg-[#565869] text-gray-300'
                       }`}>
-                        {u.role}
+                        {user.role}
                       </span>
                     </td>
                   </tr>
@@ -426,14 +489,6 @@ function AdminDashboard({ token, setPage, onLogout }) {
               </tbody>
             </table>
           </div>
-        </div>
-        <div className="mt-4">
-          <button 
-            onClick={onLogout} 
-            className="bg-[#19c37d] text-white px-4 py-2 rounded hover:bg-[#15a367] transition font-inter"
-          >
-            Logout
-          </button>
         </div>
       </div>
     </div>
@@ -476,11 +531,6 @@ export default function App() {
   if (page === 'admin') return <AdminDashboard token={token} setPage={setPage} onLogout={handleLogout} />;
 
   return (
-    <div>
-      {user?.role === 'admin' && (
-        <button onClick={() => setPage('admin')} className="fixed top-4 left-4 bg-[#19c37d] text-white px-4 py-2 rounded shadow-lg z-50 hover:bg-[#15a367] transition font-inter">Admin Dashboard</button>
-      )}
-      <ChatGPTClone user={user} token={token} onLogout={handleLogout} />
-    </div>
+    <ChatGPTClone user={user} token={token} onLogout={handleLogout} onAdminDashboard={() => setPage('admin')} />
   );
 }

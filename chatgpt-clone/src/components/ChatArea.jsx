@@ -82,12 +82,7 @@ function ChatArea({ messages, onSend, isTyping = false }) {
   }, [input]);
 
   const handleSend = () => {
-    console.log('ChatArea handleSend called with input:', input);
-    if (!input.trim()) {
-      console.log('Input is empty, not sending');
-      return;
-    }
-    console.log('Calling onSend with:', input);
+    if (!input.trim()) return;
     onSend(input);
     setInput('');
     if (textareaRef.current) {
@@ -98,16 +93,15 @@ function ChatArea({ messages, onSend, isTyping = false }) {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      console.log('Enter key pressed, preventing default and calling handleSend');
       e.preventDefault();
       handleSend();
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#343541]">
+    <div className="flex flex-col h-full min-h-0 bg-[#343541]">
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 lg:px-16 py-8">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 lg:px-16 py-8">
         {messages.length === 0 ? (
           <div className="text-gray-400 text-center mt-20 font-inter text-lg">
             ChatGPT can answer questions, explain code, and more. Start a conversation!
