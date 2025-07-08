@@ -3,9 +3,6 @@ import ChatGPTClone from './ChatGPTClone';
 
 const API_BASE = "http://localhost:4000/api";
 
-// Mock user for login
-const MOCK_USER = { email: 'latifmuda12@gmail.com', password: 'password' };
-
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -32,12 +32,10 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
 
   // Load user's sessions on component mount
   useEffect(() => {
-    console.log('ChatGPTClone mounted, token:', token ? 'present' : 'missing');
     if (token) {
       loadSessions();
       loadGroups();
     } else {
-      console.error('No token provided to ChatGPTClone');
       setLoading(false);
     }
   }, [token]);
@@ -55,7 +53,6 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
   }, [chatMode, groups, groupSessions]);
 
   const loadSessions = async () => {
-    console.log('Loading sessions...');
     try {
       const response = await fetch(`${API_BASE}/sessions`, {
         headers: {
@@ -63,28 +60,21 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
         }
       });
       
-      console.log('Sessions response status:', response.status);
-      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Failed to load sessions:', errorText);
         throw new Error('Failed to load sessions');
       }
       
       const data = await response.json();
-      console.log('Sessions loaded:', data.length);
       setSessions(data);
       
       // Set the first session as active, or create a new one if none exist
       if (data.length > 0) {
         setActiveSessionId(data[0].id);
-        console.log('Set active session:', data[0].id);
       } else {
-        console.log('No sessions found, creating new chat...');
         await handleNewChat();
       }
     } catch (error) {
-      console.error('Error loading sessions:', error);
       // Create a new session if loading fails
       await handleNewChat();
     } finally {
@@ -100,19 +90,15 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
         }
       });
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Failed to load groups:', errorText);
         return;
       }
       const data = await response.json();
-      console.log('Groups loaded:', data.length);
       setGroups(data);
       // Load group sessions for each group
       if (data.length > 0) {
         loadGroupSessions(data);
       }
     } catch (error) {
-      console.error('Error loading groups:', error);
     }
   };
 
@@ -124,7 +110,6 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
         }).then(async res => {
           if (!res.ok) {
             const errorText = await res.text();
-            console.error(`Failed to load sessions for group ${group.id}:`, errorText);
             return [];
           }
           return res.json();
@@ -137,7 +122,6 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
       });
       setGroupSessions(sessionsMap);
     } catch (error) {
-      console.error('Error loading group sessions:', error);
     }
   };
 
@@ -158,7 +142,6 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
       setSessions(prev => [newSession, ...prev]);
       setActiveSessionId(newSession.id);
     } catch (error) {
-      console.error('Error creating new chat:', error);
     }
   };
 
@@ -192,7 +175,6 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
 
       return savedMessage;
     } catch (error) {
-      console.error('Error saving message:', error);
     }
   };
 
@@ -209,7 +191,6 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
       });
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Failed to save group message:', errorText);
         return null;
       }
       const savedMessage = await response.json();
@@ -227,7 +208,6 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
       }));
       return savedMessage;
     } catch (error) {
-      console.error('Error saving group message:', error);
       return null;
     }
   };
@@ -308,7 +288,6 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
 
   const handleGroupSend = async (input, askBot = false) => {
     if (!activeGroupId || !activeGroupSessionId) {
-      console.error('No active group session');
       return;
     }
 
