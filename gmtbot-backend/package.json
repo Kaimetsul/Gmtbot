@@ -1,5 +1,5 @@
 {
-  "name": "chatgpt-backend",
+  "name": "gmtbot-backend",
   "type": "module",
   "version": "1.0.0",
   "main": "index.js",

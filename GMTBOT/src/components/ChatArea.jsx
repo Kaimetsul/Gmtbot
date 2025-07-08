@@ -104,7 +104,7 @@ function ChatArea({ messages, onSend, isTyping = false }) {
       <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 lg:px-16 py-8">
         {messages.length === 0 ? (
           <div className="text-gray-400 text-center mt-20 font-inter text-lg">
-            ChatGPT can answer questions, explain code, and more. Start a conversation!
+            GMTBOT can answer questions, explain code, and more. Start a conversation!
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
@@ -124,7 +124,7 @@ function ChatArea({ messages, onSend, isTyping = false }) {
             <textarea
               ref={textareaRef}
               className="w-full resize-none px-4 py-3 rounded-xl border border-[#565869] bg-[#40414f] text-white focus:outline-none focus:ring-2 focus:ring-[#19c37d] font-inter text-sm leading-relaxed min-h-[48px] max-h-[200px]"
-              placeholder="Message ChatGPT..."
+              placeholder="Message GMTBOT..."
               value={input}
               rows={1}
               onChange={e => setInput(e.target.value)}
@@ -143,7 +143,7 @@ function ChatArea({ messages, onSend, isTyping = false }) {
             </button>
           </div>
           <div className="text-xs text-gray-400 text-center mt-3 font-inter">
-            ChatGPT can make mistakes. Consider checking important information.
+            GMTBOT can make mistakes. Consider checking important information.
           </div>
         </div>
       </div>

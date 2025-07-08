@@ -10,7 +10,7 @@ import GroupChatArea from './components/GroupChatArea.jsx';
 
 const API_BASE = "http://localhost:4000/api";
 
-function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
+function GMTBOT({ token, user, onLogout, onAdminDashboard }) {
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -479,4 +479,4 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
   );
 }
 
-export default ChatGPTClone; 
+export default GMTBOT; 

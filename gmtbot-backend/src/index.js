@@ -17,7 +17,7 @@ app.use(express.json());
 
 // Health check
 app.get("/", (req, res) => {
-  res.send("ChatGPT Backend API is running!");
+  res.send("GMTBOT Backend API is running!");
 });
 
 // TODO: Add routes here
