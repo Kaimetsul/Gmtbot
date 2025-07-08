@@ -292,7 +292,7 @@ router.get('/:groupId/sessions/:sessionId', authenticateToken, async (req, res) 
 router.post('/:groupId/sessions/:sessionId/messages', authenticateToken, async (req, res) => {
   try {
     const { groupId, sessionId } = req.params;
-    const { content } = req.body;
+    const { content, role = 'user' } = req.body;
 
     // Check if user is a member of this group
     const membership = await prisma.groupMember.findFirst({
@@ -323,7 +323,7 @@ router.post('/:groupId/sessions/:sessionId/messages', authenticateToken, async (
       data: {
         content,
         groupSessionId: parseInt(sessionId),
-        userId: req.user.id
+        userId: role === 'assistant' ? null : req.user.id
       },
       include: {
         user: {

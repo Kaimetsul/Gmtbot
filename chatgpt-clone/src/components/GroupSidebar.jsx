@@ -164,7 +164,7 @@ function GroupSidebar({
       </div>
       
       <div className="flex-1 overflow-y-auto mt-2 px-2">
-        {groups.map(group => (
+        {[...new Map(groups.map(g => [g.id, g])).values()].map(group => (
           <div key={group.id} className="mb-4">
             {/* Group Header */}
             <div className="flex items-center justify-between px-3 py-2 bg-[#343541] rounded-lg mb-2">

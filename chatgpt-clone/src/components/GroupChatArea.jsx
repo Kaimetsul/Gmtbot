@@ -39,21 +39,23 @@ function CodeBlock({ code, language = 'javascript' }) {
 }
 
 function GroupMessageBubble({ message, currentUserId }) {
-  const isCurrentUser = message.user?.id === currentUserId;
-  
+  const isAI = message.role === 'assistant';
+  const isCurrentUser = !isAI && message.user?.id === currentUserId;
   return (
     <div className={`flex mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[75%] ${isCurrentUser ? 'order-2' : 'order-1'}`}>
-        {!isCurrentUser && message.user && (
+        {!isCurrentUser && (
           <div className="text-xs text-gray-400 mb-1 ml-1">
-            {message.user.name || message.user.email}
+            {isAI ? 'ai' : (message.user?.name || message.user?.email)}
           </div>
         )}
         <div 
           className={`px-4 py-3 rounded-xl font-inter text-sm leading-relaxed ${
             isCurrentUser 
               ? 'bg-[#19c37d] text-white' 
-              : 'bg-[#444654] text-white'
+              : isAI
+                ? 'bg-blue-500 text-white'
+                : 'bg-[#444654] text-white'
           }`}
         >
           <div className="whitespace-pre-wrap">

@@ -42,6 +42,18 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
     }
   }, [token]);
 
+  useEffect(() => {
+    if (chatMode === 'group' && groups.length > 0 && (!activeGroupId || !activeGroupSessionId)) {
+      // Find the first group with at least one session
+      const firstGroup = groups[0];
+      const firstSession = groupSessions[firstGroup.id]?.[0];
+      if (firstGroup && firstSession) {
+        setActiveGroupId(firstGroup.id);
+        setActiveGroupSessionId(firstSession.id);
+      }
+    }
+  }, [chatMode, groups, groupSessions]);
+
   const loadSessions = async () => {
     console.log('Loading sessions...');
     try {
@@ -184,7 +196,7 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
     }
   };
 
-  const saveGroupMessage = async (content) => {
+  const saveGroupMessage = async (content, role = 'user') => {
     if (!activeGroupId || !activeGroupSessionId) return;
     try {
       const response = await fetch(`${API_BASE}/groups/${activeGroupId}/sessions/${activeGroupSessionId}/messages`, {
@@ -193,7 +205,7 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ content, role })
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -301,7 +313,7 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
     }
 
     // Save user message to database
-    await saveGroupMessage(input);
+    await saveGroupMessage(input, 'user');
 
     if (askBot) {
       // Prepare payload for Langflow API
@@ -339,10 +351,10 @@ function ChatGPTClone({ token, user, onLogout, onAdminDashboard }) {
           aiContent = JSON.stringify(data);
         }
         // Save assistant message to database as a group message
-        await saveGroupMessage(aiContent);
+        await saveGroupMessage(aiContent, 'assistant');
       } catch (err) {
         const errorMsg = `Error: ${err.message}`;
-        await saveGroupMessage(errorMsg);
+        await saveGroupMessage(errorMsg, 'assistant');
       }
     }
   };
